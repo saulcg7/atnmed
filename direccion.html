@@ -11,8 +11,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#00655F">
 <style>
-  html, body { margin:0; padding:0; height:100%; background:#F4F7F6; font-family:Arial,Helvetica,sans-serif; }
-  iframe { position:fixed; inset:0; width:100vw; height:100vh; border:0; display:none; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#F4F7F6; font-family:Arial,Helvetica,sans-serif; }
+  iframe {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    width:100vw; height:100vh; /* respaldo para navegadores muy viejos */
+    width:100dvw; height:100dvh; /* alto/ancho real visible en móvil (ver JS de abajo para el respaldo extra) */
+    border:0; display:none;
+  }
   #error { display:none; text-align:center; padding:60px 20px; color:#555; max-width:480px; margin:0 auto; }
   #error h2 { color:#AE1F2D; margin-bottom:10px; }
 </style>
@@ -31,13 +36,29 @@
     // archivo puede vivir en un repositorio público de GitHub sin exponer ningún token.
     var APP_BASE = 'https://script.google.com/macros/s/AKfycbzJYPjnnFpB-IZRJLrZOhsm7hlg5sXny-ACPe6CoRSb9W7YDP2GwqYhVkZfMOuRGv0/exec';
     var qs = location.search;
+    var iframe = document.getElementById('app');
     if (qs && qs.indexOf('rol=') !== -1) {
-      var iframe = document.getElementById('app');
       iframe.src = APP_BASE + qs;
       iframe.style.display = 'block';
     } else {
       document.getElementById('error').style.display = 'block';
     }
+
+    // Respaldo en JavaScript del alto/ancho real de la pantalla: en varios navegadores
+    // de celular, la unidad "100vh" mide el alto TOTAL como si no hubiera barra de
+    // direcciones, aunque en ese momento sí esté visible — eso deja una parte de la
+    // página oculta debajo de la barra del navegador, sin que ningún scroll la muestre.
+    // "100dvh" (arriba, en el CSS) ya corrige esto en navegadores recientes; este
+    // bloque es un respaldo adicional para que funcione también en navegadores viejos,
+    // fijando el tamaño real en píxeles y actualizándolo si cambia (rotar el celular,
+    // que aparezca/desaparezca la barra de direcciones, etc.).
+    function ajustarTamano() {
+      iframe.style.width = window.innerWidth + 'px';
+      iframe.style.height = window.innerHeight + 'px';
+    }
+    ajustarTamano();
+    window.addEventListener('resize', ajustarTamano);
+    window.addEventListener('orientationchange', function () { setTimeout(ajustarTamano, 150); });
   </script>
 </body>
 </html>
